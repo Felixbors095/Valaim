@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>无畏契约专属灵敏度生成器</title>
+  <link rel="icon" href="icon.ico" />
+  <link rel="stylesheet" href="style.css" />
+  <title>无畏契约游戏灵敏度生成器</title>
   <style>
     :root {
       --bg: #070b10;
@@ -78,6 +80,15 @@
     input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(32,231,210,.1); }
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding: 11px 12px; border: 1px solid #26384a; background: rgba(255,255,255,.035); }
+    .switch-row label { margin: 0; }
+    .switch-note { color: var(--muted); font-size: 12px; }
+    .switch { position: relative; width: 54px; height: 28px; flex: 0 0 auto; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; cursor: pointer; background: #182331; border: 1px solid #34465a; transition: .2s ease; }
+    .slider::before { content: ""; position: absolute; width: 18px; height: 18px; left: 4px; top: 4px; background: var(--muted); transition: .2s ease; }
+    .switch input:checked + .slider { background: rgba(255,70,85,.22); border-color: var(--red); box-shadow: 0 0 18px rgba(255,70,85,.25); }
+    .switch input:checked + .slider::before { transform: translateX(25px); background: var(--red); }
     .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
     button {
       border: 1px solid transparent;
@@ -157,8 +168,16 @@
     #crosshair::after { left: 0; top: 16px; width: 34px; height: 2px; }
     .dot { position: absolute; left: 15px; top: 15px; width: 4px; height: 4px; background: var(--red); }
 
-    .hit-pop { position: absolute; color: var(--green); font-weight: 1000; pointer-events: none; animation: pop .45s ease forwards; z-index: 4; }
+    .hit-pop { position: absolute; color: var(--green); font-weight: 1000; pointer-events: none; animation: pop .45s ease forwards; z-index: 4; text-shadow: 0 0 14px rgba(125,242,122,.8); }
+    .hit-ring { position: absolute; width: 18px; height: 18px; border: 2px solid var(--cyan); pointer-events: none; z-index: 3; transform: translate(-50%, -50%); animation: hitRing .42s ease-out forwards; }
+    .hit-shard { position: absolute; width: 7px; height: 7px; background: var(--red); pointer-events: none; z-index: 3; transform: translate(-50%, -50%); animation: shardBurst .42s ease-out forwards; }
+    .hit-shard.cyan { background: var(--cyan); }
+    .scan-line { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+    .scan-line::before { content: ""; position: absolute; top: 0; bottom: 0; width: 90px; background: linear-gradient(90deg, transparent, rgba(255,70,85,.34), rgba(32,231,210,.24), transparent); transform: translateX(-120px); animation: phaseScan .72s ease-out forwards; }
     @keyframes pop { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-30px) scale(1.45); } }
+    @keyframes hitRing { from { opacity: 1; width: 12px; height: 12px; box-shadow: 0 0 14px rgba(32,231,210,.7); } to { opacity: 0; width: 78px; height: 78px; box-shadow: 0 0 32px rgba(255,70,85,.4); } }
+    @keyframes shardBurst { to { opacity: 0; transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) rotate(90deg); } }
+    @keyframes phaseScan { to { transform: translateX(calc(100vw + 160px)); } }
 
     .progress { height: 8px; background: #0a1017; border-top: 1px solid var(--line); }
     #bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--cyan)); transition: width .15s linear; }
@@ -169,6 +188,19 @@
     .step.done { color: var(--green); border-color: rgba(125,242,122,.45); }
 
     .notice { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .focus-note { margin-top: 12px; padding: 10px 12px; border: 1px solid rgba(32,231,210,.35); background: rgba(32,231,210,.06); color: #cfeeea; font-size: 12px; line-height: 1.6; }
+    .settlement { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 20px; background: rgba(5,7,11,.72); opacity: 0; visibility: hidden; pointer-events: none; transition: .28s ease; }
+    .settlement.show { opacity: 1; visibility: visible; pointer-events: auto; }
+    .settlement-card { width: min(720px, calc(100vw - 34px)); padding: 24px; border: 1px solid rgba(255,70,85,.62); background: linear-gradient(180deg, rgba(17,24,34,.96), rgba(7,11,16,.96)); box-shadow: 0 0 80px rgba(255,70,85,.25); clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 24px 100%, 0 calc(100% - 24px)); animation: panelDeploy .45s cubic-bezier(.2,.8,.2,1) both; }
+    .settlement-title { color: var(--red); font-size: 34px; font-weight: 1000; letter-spacing: .12em; }
+    .settlement-sens { margin: 12px 0; color: var(--green); font-size: 62px; font-weight: 1000; line-height: 1; text-shadow: 0 0 26px rgba(125,242,122,.45); }
+    .settlement-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+    .grade-box { padding: 12px; border: 1px solid #2a3b4d; background: rgba(255,255,255,.035); }
+    .grade-box b { display: block; color: var(--cyan); font-size: 26px; }
+    .grade-box span { color: var(--muted); font-size: 12px; }
+    .settlement-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .footer { margin-top: 18px; padding: 14px 18px; border: 1px solid var(--line); color: var(--muted); background: rgba(7,11,16,.62); font-size: 12px; line-height: 1.7; }
+    .footer b { color: var(--text); }
     .kbd { color: var(--text); border: 1px solid #40556b; padding: 1px 6px; background: #0b1118; }
 
     #bootLoader {
@@ -196,6 +228,46 @@
       box-shadow: 0 0 70px rgba(255,70,85,.22), inset 0 0 0 1px rgba(255,255,255,.05);
       clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px));
     }
+
+    .grid, .habit-panel, .habit-panel > :not(.section-title) { transition: .55s cubic-bezier(.2,.8,.2,1); }
+    .testing-focus header { opacity: .28; filter: saturate(.65) blur(.4px); }
+    .testing-focus .grid { grid-template-columns: 96px 1fr; }
+    .testing-focus .habit-panel { max-height: 78px; padding: 14px 10px; overflow: hidden; opacity: .78; transform: translateX(-8px) scale(.98); }
+    .testing-focus .habit-panel .section-title { writing-mode: vertical-rl; margin: 0 auto; gap: 8px; }
+    .testing-focus .habit-panel .section-title h2 { font-size: 14px; letter-spacing: .16em; }
+    .testing-focus .habit-panel .section-title .mini { display: none; }
+    .testing-focus .habit-panel > :not(.section-title) { opacity: 0; transform: translateX(-22px); pointer-events: none; }
+    .testing-focus .arena-card { box-shadow: 0 0 0 1px rgba(32,231,210,.35), 0 24px 90px rgba(0,0,0,.72); }
+
+    #testStartOverlay {
+      position: absolute;
+      top: 78px;
+      right: 18px;
+      z-index: 8;
+      width: min(340px, calc(100% - 36px));
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-10px) scale(.96);
+      transition: opacity .22s ease, visibility .22s ease, transform .22s ease;
+    }
+    #testStartOverlay.show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+    .start-alert {
+      padding: 14px 16px;
+      border: 1px solid rgba(32,231,210,.55);
+      background: rgba(10,14,20,.92);
+      box-shadow: 0 0 28px rgba(32,231,210,.18), inset 0 0 0 1px rgba(255,255,255,.05);
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+      animation: tipPop .28s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .start-alert-title {
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: .16em;
+    }
+    .start-alert-sub { margin-top: 8px; color: #cfe0f2; font-size: 12px; line-height: 1.55; }
+    .start-alert-count { margin-top: 8px; color: var(--gold); font-size: 30px; font-weight: 1000; font-variant-numeric: tabular-nums; }
 
     .boot-title {
       color: var(--red);
@@ -282,6 +354,7 @@
     @keyframes targetThreat { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
     @keyframes activeStep { 0%, 100% { box-shadow: inset 0 0 0 rgba(32,231,210,0); } 50% { box-shadow: inset 0 0 22px rgba(32,231,210,.18), 0 0 18px rgba(32,231,210,.15); } }
     @keyframes sensPulse { 0%, 100% { text-shadow: 0 0 0 rgba(125,242,122,0); } 50% { text-shadow: 0 0 22px rgba(125,242,122,.5); } }
+    @keyframes tipPop { from { opacity: 0; transform: translateY(-8px); filter: blur(4px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
@@ -297,14 +370,14 @@
 <body>
   <main class="wrap">
     <header>
-      <div class="tag">VALORANT SENSITIVITY LAB · HTML WEB</div>
-      <h1>无畏契约<span>专属灵敏度</span>生成器</h1>
-      <p class="intro">填写你的 DPI 和习惯，完成内嵌 Aimlabs 风格测试。准星碰到目标就触发命中，不需要点击。最终输出的是《无畏契约》游戏设置里可直接输入并应用的灵敏度数值。</p>
+      <div class="tag">FPS SENSITIVITY LAB </div>
+      <h1>FPS游戏<span>灵敏度</span>生成器</h1>
+      <p class="intro">填写你的 DPI 和当前游戏灵敏度，完成内嵌 Aimlabs 风格测试。准星碰到目标就触发命中，不需要点击。结果基于你的原有灵敏度微调生成，适用范围仅限《无畏契约》和 CS2，数值请在对应游戏设置中应用。</p>
     </header>
 
     <section class="grid">
-      <aside class="card">
-        <div class="section-title"><h2>个人习惯</h2><span class="mini">当前版本可用数值</span></div>
+      <aside class="card habit-panel">
+        <div class="section-title"><h2>个人习惯</h2><span class="mini">仅限无畏契约 / CS2</span></div>
         <div class="row">
           <div>
             <label for="dpi">鼠标 DPI</label>
@@ -334,6 +407,16 @@
           <option value="sentinel">哨位 / 稳定架点</option>
           <option value="operator">狙击 / 低敏微调</option>
         </select>
+        <div class="switch-row">
+          <div>
+            <label for="clickMode">启用鼠标点击</label>
+            <div class="switch-note" id="clickModeText">关闭：准星碰到目标即命中</div>
+          </div>
+          <label class="switch">
+            <input id="clickMode" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
         <div class="btns">
           <button id="startBtn">开始测试</button>
           <button id="resetBtn" class="secondary">重置</button>
@@ -347,12 +430,14 @@
         </div>
 
         <div class="result" id="resultBox">
-          <div class="mini">推荐无畏契约灵敏度</div>
+          <div class="mini">推荐游戏内灵敏度</div>
           <div class="sens" id="sensOut">--</div>
           <div class="mini" id="edpiOut">完成测试后生成可用的游戏内灵敏度</div>
+          <button id="copySensBtn" class="cyan" disabled>复制灵敏度</button>
           <ul class="reason" id="reasons"><li>建议完整完成三项测试，结果会更贴合你的个人习惯。</li></ul>
         </div>
-        <p class="notice">应用方式：打开无畏契约 → 设置 → 一般 → 鼠标 → 灵敏度：瞄准，输入生成的三位小数即可。按 <span class="kbd">Esc</span> 可退出鼠标锁定。</p>
+        <p class="focus-note">专注模式：测试开始后左侧信息会自动弱化，每个阶段开始前都会进入 3 秒倒计时，避免突然切换影响发挥。</p>
+        <p class="notice">适用声明：本生成器仅辅助《无畏契约》和 CS2 的游戏内灵敏度微调，不适用于其他 FPS。保持鼠标 DPI 不变，把生成的三位小数输入对应游戏灵敏度设置。按 <span class="kbd">Esc</span> 可退出鼠标锁定。</p>
       </aside>
 
       <section class="card arena-card">
@@ -361,6 +446,14 @@
           <div class="timer" id="timer">00.0</div>
         </div>
         <div id="arena" aria-label="瞄准测试区域">
+          <div id="scanLine" class="scan-line" hidden></div>
+          <div id="testStartOverlay" aria-hidden="true">
+            <div class="start-alert">
+              <div class="start-alert-title">阶段提示</div>
+              <div class="start-alert-sub" id="startOverlayTip">准备进入下一项测试</div>
+              <div class="start-alert-count" id="startOverlayCount">03</div>
+            </div>
+          </div>
           <div id="target" class="target" hidden></div>
           <div id="crosshair"><div class="dot"></div></div>
         </div>
@@ -372,7 +465,28 @@
         </div>
       </section>
     </section>
+    <footer class="footer">
+      <b>© 2026 Valaim / FPS游戏灵敏度生成器. All Rights Reserved.</b><br>
+      作者：LaiF。未经授权，禁止复制、修改、转载、分发、商用或二次发布。本网页仅作为《无畏契约》和 CS2 灵敏度辅助测试工具，生成结果需由玩家根据个人手感自行验证。
+    </footer>
   </main>
+
+  <div id="settlementPanel" class="settlement" aria-hidden="true">
+    <div class="settlement-card">
+      <div class="settlement-title">战绩结算</div>
+      <div class="mini" id="settlementSummary">灵敏度生成完成</div>
+      <div class="settlement-sens" id="settlementSens">--</div>
+      <div class="settlement-grid">
+        <div class="grade-box"><b id="flickGrade">--</b><span>Aimlabs 触碰</span></div>
+        <div class="grade-box"><b id="trackGrade">--</b><span>追踪稳定</span></div>
+        <div class="grade-box"><b id="microGrade">--</b><span>微调控制</span></div>
+      </div>
+      <div class="settlement-actions">
+        <button id="copySensPanelBtn" class="cyan">复制灵敏度</button>
+        <button id="closeSettlementBtn" class="secondary">关闭结算</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const arena = document.getElementById('arena');
@@ -391,6 +505,21 @@
     const sensOut = document.getElementById('sensOut');
     const edpiOut = document.getElementById('edpiOut');
     const reasonsEl = document.getElementById('reasons');
+    const clickMode = document.getElementById('clickMode');
+    const clickModeText = document.getElementById('clickModeText');
+    const copySensBtn = document.getElementById('copySensBtn');
+    const copySensPanelBtn = document.getElementById('copySensPanelBtn');
+    const closeSettlementBtn = document.getElementById('closeSettlementBtn');
+    const settlementPanel = document.getElementById('settlementPanel');
+    const settlementSens = document.getElementById('settlementSens');
+    const settlementSummary = document.getElementById('settlementSummary');
+    const flickGrade = document.getElementById('flickGrade');
+    const trackGrade = document.getElementById('trackGrade');
+    const microGrade = document.getElementById('microGrade');
+    const scanLine = document.getElementById('scanLine');
+    const testStartOverlay = document.getElementById('testStartOverlay');
+    const startOverlayTip = document.getElementById('startOverlayTip');
+    const startOverlayCount = document.getElementById('startOverlayCount');
     const stepEls = {
       flick: document.getElementById('step-flick'),
       track: document.getElementById('step-track'),
@@ -411,13 +540,17 @@
       microTotal: 0,
       trackGood: 0,
       trackTotal: 0,
-      raf: null
+      raf: null,
+      countdownTimer: null,
+      audioCtx: null,
+      lastSens: '',
+      clickRequired: false
     };
 
     const phases = [
-      { key: 'flick', name: 'Aimlabs 触碰测试', duration: 15, hint: '移动准星碰到红色目标即命中，不需要点击。' },
+      { key: 'flick', name: 'Aimlabs 触碰测试', duration: 15, hint: '根据左侧开关，使用触碰命中或点击命中红色目标。' },
       { key: 'track', name: '追踪稳定性测试', duration: 12, hint: '尽量让准星贴住青色移动目标。' },
-      { key: 'micro', name: '微调控制测试', duration: 12, hint: '黄色小目标用于判断微调能力，碰到即命中。' }
+      { key: 'micro', name: '微调控制测试', duration: 12, hint: '黄色小目标用于判断微调能力，可按开关选择触碰或点击。' }
     ];
     let phaseIndex = 0;
 
@@ -438,8 +571,17 @@
       const r = rect();
       state.cross.x = clamp(x, 0, r.width);
       state.cross.y = clamp(y, 0, r.height);
-      crosshair.style.left = state.cross.x + 'px';
-      crosshair.style.top = state.cross.y + 'px';
+      crosshair.style.left = Math.round(state.cross.x) + 'px';
+      crosshair.style.top = Math.round(state.cross.y) + 'px';
+    }
+
+    function centerCrosshair() {
+      const r = rect();
+      setCrosshair(r.width / 2, r.height / 2);
+    }
+
+    function isActiveAimPhase() {
+      return state.running && (state.phase === 'flick' || state.phase === 'track' || state.phase === 'micro');
     }
 
     function distanceToTarget() {
@@ -454,7 +596,47 @@
       return 28;
     }
 
+    function playHitSound() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      if (!state.audioCtx) state.audioCtx = new AudioContext();
+      const ctx = state.audioCtx;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.045);
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.075);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.08);
+    }
+
+    function burstHitEffect() {
+      const ring = document.createElement('div');
+      ring.className = 'hit-ring';
+      ring.style.left = state.target.x + 'px';
+      ring.style.top = state.target.y + 'px';
+      arena.appendChild(ring);
+      setTimeout(() => ring.remove(), 460);
+      [[-34, -24], [34, -22], [-28, 30], [30, 28]].forEach((dir, i) => {
+        const shard = document.createElement('div');
+        shard.className = 'hit-shard' + (i % 2 ? ' cyan' : '');
+        shard.style.left = state.target.x + 'px';
+        shard.style.top = state.target.y + 'px';
+        shard.style.setProperty('--sx', dir[0] + 'px');
+        shard.style.setProperty('--sy', dir[1] + 'px');
+        arena.appendChild(shard);
+        setTimeout(() => shard.remove(), 460);
+      });
+    }
+
     function flashHit(text) {
+      playHitSound();
+      burstHitEffect();
       const pop = document.createElement('div');
       pop.className = 'hit-pop';
       pop.textContent = text;
@@ -478,7 +660,7 @@
       Object.values(stepEls).forEach(el => { el.classList.remove('active', 'done'); });
       phases.forEach((p, i) => {
         if (i < phaseIndex) stepEls[p.key].classList.add('done');
-        if (i === phaseIndex && state.running) stepEls[p.key].classList.add('active');
+        if (i === phaseIndex && state.running && state.phase !== 'idle' && state.phase !== 'done') stepEls[p.key].classList.add('active');
       });
     }
 
@@ -486,14 +668,53 @@
       reset(false);
       startBtn.disabled = true;
       state.running = true;
-      const r = rect();
-      setCrosshair(r.width / 2, r.height / 2);
+      centerCrosshair();
+      state.clickRequired = clickMode.checked;
+      document.body.classList.add('testing-focus');
       try { await arena.requestPointerLock(); } catch (e) {}
       phaseIndex = 0;
-      startPhase();
+      startPhaseCountdown();
+    }
+
+    function startPhaseCountdown() {
+      const p = phases[phaseIndex];
+      let left = 3;
+      state.phase = 'countdown';
+      target.hidden = true;
+      phaseName.textContent = p.name + ' 准备';
+      phaseHint.textContent = '保持握鼠姿势，' + left + ' 秒后开始：' + p.hint;
+      timerEl.textContent = '0' + left;
+      startOverlayTip.textContent = p.name + '：' + p.hint;
+      startOverlayCount.textContent = String(left).padStart(2, '0');
+      testStartOverlay.classList.add('show');
+      bar.style.width = '0%';
+      updateSteps();
+      clearInterval(state.countdownTimer);
+      state.countdownTimer = setInterval(() => {
+        left--;
+        if (left <= 0) {
+          clearInterval(state.countdownTimer);
+          testStartOverlay.classList.remove('show');
+          startPhase();
+        } else {
+          phaseHint.textContent = '保持握鼠姿势，' + left + ' 秒后开始：' + p.hint;
+          timerEl.textContent = '0' + left;
+          startOverlayCount.textContent = String(left).padStart(2, '0');
+        }
+      }, 1000);
+    }
+
+    function playPhaseScan() {
+      scanLine.hidden = false;
+      scanLine.style.animation = 'none';
+      void scanLine.offsetWidth;
+      scanLine.style.animation = '';
+      setTimeout(() => { scanLine.hidden = true; }, 760);
     }
 
     function startPhase() {
+      playPhaseScan();
+      centerCrosshair();
       const p = phases[phaseIndex];
       state.phase = p.key;
       state.duration = p.duration;
@@ -505,8 +726,8 @@
       if (p.key === 'micro') state.microTotal = 0;
       if (p.key === 'track') {
         placeTarget(80);
-        state.target.vx = 180;
-        state.target.vy = 130;
+        state.target.vx = 105;
+        state.target.vy = 78;
       } else {
         placeTarget(p.key === 'micro' ? 34 : 52);
         if (p.key === 'micro') state.microTotal++;
@@ -521,7 +742,7 @@
       if (phaseIndex >= phases.length) {
         finish();
       } else {
-        startPhase();
+        startPhaseCountdown();
       }
     }
 
@@ -533,15 +754,15 @@
       bar.style.width = ((elapsed / state.duration) * 100).toFixed(1) + '%';
 
       if (state.phase === 'track') updateTrack(now);
-      if (state.phase === 'flick' || state.phase === 'micro') checkTouchHit();
+      if (!state.clickRequired && (state.phase === 'flick' || state.phase === 'micro')) checkTouchHit();
       updateStats();
 
       if (left <= 0) nextPhase();
       else state.raf = requestAnimationFrame(loop);
     }
 
-    function checkTouchHit() {
-      if (distanceToTarget() <= hitRadius()) {
+    function checkTouchHit(force = false) {
+      if ((force || !state.clickRequired) && distanceToTarget() <= hitRadius()) {
         if (state.phase === 'flick') {
           state.flickHits++;
           state.flickTimes.push(performance.now() - state.targetStart);
@@ -555,6 +776,12 @@
         }
       }
     }
+
+    arena.addEventListener('mousedown', () => {
+      if (state.clickRequired && (state.phase === 'flick' || state.phase === 'micro')) {
+        checkTouchHit(true);
+      }
+    });
 
     function updateTrack(now) {
       const r = rect();
@@ -575,7 +802,8 @@
       target.hidden = true;
       timerEl.textContent = '完成';
       phaseName.textContent = '已生成结果';
-      phaseHint.textContent = '推荐值已限制在无畏契约可输入的常用范围内。';
+      document.body.classList.remove('testing-focus');
+      phaseHint.textContent = '推荐值已按你的原有灵敏度微调，仅限无畏契约和 CS2 参考使用。';
       bar.style.width = '100%';
       Object.values(stepEls).forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
       startBtn.disabled = false;
@@ -590,56 +818,90 @@
       const pad = document.getElementById('pad').value;
       const style = document.getElementById('style').value;
       const role = document.getElementById('role').value;
-      const currentReference = dpi * currentSens;
+      const clickRequired = clickMode.checked;
 
-      let base = style === 'low' ? 220 : style === 'high' ? 360 : 280;
-      if (pad === 'small') base += 45;
-      if (pad === 'large') base -= 35;
-      if (role === 'operator' || role === 'sentinel') base -= 25;
-      if (role === 'duelist') base += 20;
+      let habitAdjust = 0;
+      if (style === 'low') habitAdjust -= 0.035;
+      if (style === 'high') habitAdjust += 0.04;
+      if (pad === 'small') habitAdjust += 0.035;
+      if (pad === 'large') habitAdjust -= 0.025;
+      if (role === 'operator' || role === 'sentinel') habitAdjust -= 0.02;
+      if (role === 'duelist') habitAdjust += 0.018;
 
       const avg = state.flickTimes.length ? state.flickTimes.reduce((a, b) => a + b, 0) / state.flickTimes.length : 900;
       const flickScore = clamp(state.flickHits / 18, 0, 1);
       const trackRate = state.trackTotal ? state.trackGood / state.trackTotal : 0;
       const microRate = state.microTotal ? state.microHits / state.microTotal : 0;
 
-      let adjust = 0;
-      if (avg > 850 && trackRate > .42) adjust += 28;
-      if (avg < 520 && microRate < .58) adjust -= 32;
-      if (trackRate < .28) adjust -= 18;
-      if (microRate > .78 && flickScore < .55) adjust += 18;
-      if (currentReference > 0) adjust += clamp((currentReference - base) * .12, -35, 35);
+      let testAdjust = 0;
+      if (avg > 850 && trackRate > .42) testAdjust += 0.035;
+      if (avg < 520 && microRate < .58) testAdjust -= 0.04;
+      if (trackRate < .28) testAdjust -= 0.025;
+      if (microRate > .78 && flickScore < .55) testAdjust += 0.025;
 
-      const targetReference = clamp(Math.round(base + adjust), 160, 460);
-      const valorantSens = clamp(targetReference / dpi, 0.05, 2);
-      const roundedSens = valorantSens.toFixed(3);
+      const roundedSens = clamp(currentSens + habitAdjust + testAdjust, 0.05, 2).toFixed(3);
 
+      state.lastSens = roundedSens;
       sensOut.textContent = roundedSens;
+      settlementSens.textContent = roundedSens;
+      copySensBtn.disabled = false;
+      copySensBtn.textContent = '复制灵敏度';
       edpiOut.textContent = '你的 DPI：' + dpi + '｜当前灵敏度：' + currentSens.toFixed(3) + '｜生成值可直接输入游戏';
 
       const reasons = [];
-      reasons.push('只需要保持你的鼠标 DPI 不变，然后把上方三位小数输入《无畏契约》灵敏度：瞄准。');
+      reasons.push('本次计算不使用 eDPI，只在你填写的当前游戏灵敏度基础上微调；保持鼠标 DPI 不变即可。');
+      reasons.push('适用范围仅限《无畏契约》和 CS2，请把上方三位小数输入对应游戏的灵敏度设置。');
       if (avg > 850) reasons.push('触碰目标平均反应偏慢，算法适度提高灵敏度，减少大幅拉枪距离。');
       if (avg < 520 && microRate < .58) reasons.push('拉枪速度较快但微调命中不足，算法降低灵敏度来增强控枪。');
       if (trackRate < .28) reasons.push('追踪贴近率偏低，推荐值避免过高，优先保证稳定性。');
       if (pad === 'small') reasons.push('你选择小鼠标垫/手腕流，游戏内灵敏度会略高，方便转身。');
       if (pad === 'large') reasons.push('你选择大鼠标垫/手臂流，游戏内灵敏度会略低，方便架枪和微调。');
+      reasons.push(clickRequired ? '本次启用了鼠标点击命中，更接近游戏实战开枪节奏。' : '本次使用默认触碰命中，适合纯测试准星移动和反应稳定性。');
       reasonsEl.innerHTML = reasons.map(item => '<li>' + item + '</li>').join('');
 
-      localStorage.setItem('valorantSensLab', JSON.stringify({ dpi, currentSens, pad, style, role, roundedSens }));
+      showSettlement(avg, trackRate, microRate, flickScore);
+      localStorage.setItem('valorantSensLab', JSON.stringify({ dpi, currentSens, pad, style, role, clickRequired, roundedSens }));
+    }
+
+    function grade(score) {
+      if (score >= .88) return 'S';
+      if (score >= .72) return 'A';
+      if (score >= .52) return 'B';
+      return 'C';
+    }
+
+    function showSettlement(avg, trackRate, microRate, flickScore) {
+      const reactionScore = clamp(1 - ((avg - 420) / 700), 0, 1);
+      flickGrade.textContent = grade((reactionScore + flickScore) / 2);
+      trackGrade.textContent = grade(trackRate);
+      microGrade.textContent = grade(microRate);
+      const overall = (reactionScore + flickScore + trackRate + microRate) / 4;
+      settlementSummary.textContent = overall >= .78 ? '评价：手感稳定，推荐值可以直接试用。' : overall >= .55 ? '评价：表现均衡，推荐值适合先打一局微调。' : '评价：优先稳定控枪，推荐值已保守处理。';
+      settlementPanel.classList.add('show');
+    }
+
+    async function copySensitivity(btn) {
+      if (!state.lastSens) return;
+      try { await navigator.clipboard.writeText(state.lastSens); } catch (e) {}
+      btn.textContent = '已复制 ' + state.lastSens;
+      setTimeout(() => { btn.textContent = '复制灵敏度'; }, 1200);
     }
 
     function reset(clearResult = true) {
       cancelAnimationFrame(state.raf);
+      clearInterval(state.countdownTimer);
+      testStartOverlay.classList.remove('show');
+      settlementPanel.classList.remove('show');
+      document.body.classList.remove('testing-focus');
       Object.assign(state, {
         running: false,
         phase: 'idle', phaseStart: 0, targetStart: 0, duration: 0,
         target: { x: 0, y: 0, vx: 160, vy: 120 },
-        flickHits: 0, flickTimes: [], microHits: 0, microTotal: 0, trackGood: 0, trackTotal: 0
+        flickHits: 0, flickTimes: [], microHits: 0, microTotal: 0, trackGood: 0, trackTotal: 0,
+        countdownTimer: null
       });
       phaseIndex = 0;
-      const r = rect();
-      setCrosshair(r.width / 2, r.height / 2);
+      centerCrosshair();
       target.hidden = true;
       phaseName.textContent = '待开始';
       phaseHint.textContent = '点击开始测试，然后在靶场内移动鼠标。';
@@ -648,7 +910,11 @@
       startBtn.disabled = false;
       Object.values(stepEls).forEach(el => el.classList.remove('active', 'done'));
       if (clearResult) {
+        state.lastSens = '';
         sensOut.textContent = '--';
+        settlementSens.textContent = '--';
+        copySensBtn.disabled = true;
+        copySensBtn.textContent = '复制灵敏度';
         edpiOut.textContent = '完成测试后生成可用的游戏内灵敏度';
         reasonsEl.innerHTML = '<li>建议完整完成三项测试，结果会更贴合你的个人习惯。</li>';
       }
@@ -662,20 +928,28 @@
     });
 
     document.addEventListener('mousemove', (event) => {
-      if (document.pointerLockElement === arena && state.running) {
+      if (document.pointerLockElement === arena && isActiveAimPhase()) {
         setCrosshair(state.cross.x + event.movementX, state.cross.y + event.movementY);
       }
     });
 
     arena.addEventListener('mousemove', (event) => {
-      if (document.pointerLockElement !== arena && !state.running) {
+      if (document.pointerLockElement !== arena && (!state.running || isActiveAimPhase())) {
         const r = rect();
         setCrosshair(event.clientX - r.left, event.clientY - r.top);
       }
     });
 
+    function updateClickModeText() {
+      clickModeText.textContent = clickMode.checked ? '开启：准星对准目标后需要点击' : '关闭：准星碰到目标即命中';
+    }
+
     startBtn.addEventListener('click', start);
     resetBtn.addEventListener('click', () => reset(true));
+    clickMode.addEventListener('change', updateClickModeText);
+    copySensBtn.addEventListener('click', () => copySensitivity(copySensBtn));
+    copySensPanelBtn.addEventListener('click', () => copySensitivity(copySensPanelBtn));
+    closeSettlementBtn.addEventListener('click', () => settlementPanel.classList.remove('show'));
     window.addEventListener('resize', () => reset(false));
 
     const saved = localStorage.getItem('valorantSensLab');
@@ -687,12 +961,18 @@
         document.getElementById('pad').value = data.pad || 'medium';
         document.getElementById('style').value = data.style || 'balanced';
         document.getElementById('role').value = data.role || 'initiator';
+        clickMode.checked = !!data.clickRequired;
+        updateClickModeText();
         if (data.roundedSens) {
+          state.lastSens = data.roundedSens;
           sensOut.textContent = data.roundedSens;
+          settlementSens.textContent = data.roundedSens;
+          copySensBtn.disabled = false;
           edpiOut.textContent = '你的 DPI：' + (data.dpi || 800) + '｜上次生成值可直接输入游戏';
         }
       } catch (e) {}
     }
+    updateClickModeText();
     reset(false);
   </script>
 </body>

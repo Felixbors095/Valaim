@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>无畏契约专属灵敏度生成器</title>
+  <style>
+    :root {
+      --bg: #070b10;
+      --panel: #111822;
+      --panel-2: #17212d;
+      --line: #273545;
+      --text: #e7eef7;
+      --muted: #8da0b4;
+      --red: #ff4655;
+      --cyan: #20e7d2;
+      --green: #7df27a;
+      --gold: #ffc857;
+      --shadow: rgba(0, 0, 0, .45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      background:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+        radial-gradient(circle at 20% 15%, rgba(255,70,85,.22), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(32,231,210,.15), transparent 25%),
+        var(--bg);
+      background-size: 32px 32px, 32px 32px, auto, auto, auto;
+      overflow-x: hidden;
+    }
+
+    .wrap { width: min(1420px, calc(100vw - 32px)); margin: 0 auto; padding: 28px 0; }
+
+    header {
+      position: relative;
+      padding: 28px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(17,24,34,.94), rgba(7,11,16,.78));
+      box-shadow: 0 22px 70px var(--shadow);
+      clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 24px 100%, 0 calc(100% - 24px));
+    }
+
+    .tag { color: var(--cyan); letter-spacing: .22em; font-size: 12px; font-weight: 800; }
+    h1 { margin: 10px 0 8px; font-size: clamp(30px, 5vw, 64px); line-height: .95; letter-spacing: -2px; }
+    h1 span { color: var(--red); }
+    .intro { max-width: 860px; color: var(--muted); line-height: 1.75; margin: 0; }
+
+    .grid { display: grid; grid-template-columns: 390px 1fr; gap: 18px; margin-top: 18px; align-items: start; }
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17,24,34,.96), rgba(12,17,24,.96));
+      box-shadow: 0 18px 55px var(--shadow);
+      padding: 18px;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    }
+
+    .section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; }
+    .section-title h2 { margin: 0; font-size: 18px; }
+    .mini { color: var(--muted); font-size: 12px; }
+
+    label { display: block; margin: 12px 0 7px; color: #cdd8e6; font-size: 13px; font-weight: 700; }
+    input, select {
+      width: 100%;
+      padding: 12px 13px;
+      color: var(--text);
+      border: 1px solid #34465a;
+      background: #0b1118;
+      outline: none;
+      font-size: 15px;
+    }
+    input:focus, select:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(32,231,210,.1); }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    button {
+      border: 1px solid transparent;
+      color: white;
+      background: var(--red);
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 900;
+      letter-spacing: .04em;
+      transition: .18s ease;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    button:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    button.secondary { background: transparent; border-color: #3a4e64; color: #cfe0f2; }
+    button.cyan { background: var(--cyan); color: #03100f; }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+    .stat { padding: 12px; border: 1px solid #26384a; background: rgba(255,255,255,.035); }
+    .stat b { display: block; font-size: 22px; margin-bottom: 4px; }
+    .stat span { color: var(--muted); font-size: 12px; }
+
+    .result { margin-top: 14px; padding: 15px; border: 1px solid rgba(255,70,85,.45); background: rgba(255,70,85,.08); }
+    .sens { font-size: 46px; line-height: 1; color: var(--green); font-weight: 1000; letter-spacing: -1px; }
+    .reason { color: #c7d4e3; line-height: 1.65; padding-left: 18px; margin-bottom: 0; }
+
+    .arena-card { padding: 0; overflow: hidden; }
+    .arena-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); background: #0d141d; }
+    .phase { color: var(--cyan); font-weight: 900; }
+    .timer { color: var(--gold); font-size: 30px; font-weight: 1000; font-variant-numeric: tabular-nums; }
+
+    #arena {
+      position: relative;
+      height: 620px;
+      background:
+        linear-gradient(rgba(32,231,210,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(32,231,210,.055) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(32,231,210,.08), transparent 45%),
+        #070a0f;
+      background-size: 40px 40px, 40px 40px, auto, auto;
+      cursor: none;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #arena::before {
+      content: "点击开始后鼠标会被锁定：移动准星碰到目标即命中，无需点击";
+      position: absolute;
+      left: 18px; bottom: 16px;
+      color: rgba(231,238,247,.35);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .target {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border: 2px solid #fff;
+      background: var(--red);
+      box-shadow: 0 0 0 4px rgba(255,70,85,.22), 0 0 26px rgba(255,70,85,.65);
+      transform: translate(-50%, -50%);
+    }
+    .target.small { width: 28px; height: 28px; background: var(--gold); box-shadow: 0 0 0 4px rgba(255,200,87,.18), 0 0 22px rgba(255,200,87,.55); }
+    .target.track { width: 54px; height: 54px; background: var(--cyan); box-shadow: 0 0 0 5px rgba(32,231,210,.18), 0 0 28px rgba(32,231,210,.55); }
+
+    #crosshair {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 34px; height: 34px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+    }
+    #crosshair::before, #crosshair::after { content: ""; position: absolute; background: white; box-shadow: 0 0 8px rgba(255,255,255,.65); }
+    #crosshair::before { left: 16px; top: 0; width: 2px; height: 34px; }
+    #crosshair::after { left: 0; top: 16px; width: 34px; height: 2px; }
+    .dot { position: absolute; left: 15px; top: 15px; width: 4px; height: 4px; background: var(--red); }
+
+    .hit-pop { position: absolute; color: var(--green); font-weight: 1000; pointer-events: none; animation: pop .45s ease forwards; z-index: 4; }
+    @keyframes pop { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-30px) scale(1.45); } }
+
+    .progress { height: 8px; background: #0a1017; border-top: 1px solid var(--line); }
+    #bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--red), var(--cyan)); transition: width .15s linear; }
+
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 14px 16px; border-top: 1px solid var(--line); background: #0d141d; }
+    .step { padding: 9px; border: 1px solid #2a3b4d; color: var(--muted); text-align: center; font-size: 12px; }
+    .step.active { color: var(--cyan); border-color: var(--cyan); background: rgba(32,231,210,.08); }
+    .step.done { color: var(--green); border-color: rgba(125,242,122,.45); }
+
+    .notice { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .kbd { color: var(--text); border: 1px solid #40556b; padding: 1px 6px; background: #0b1118; }
+
+    #bootLoader {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(rgba(255,70,85,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,70,85,.08) 1px, transparent 1px),
+        radial-gradient(circle at center, rgba(255,70,85,.28), transparent 36%),
+        #05070b;
+      background-size: 42px 42px, 42px 42px, auto, auto;
+      transition: opacity .55s ease, visibility .55s ease;
+    }
+
+    body.is-loaded #bootLoader { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .boot-box {
+      width: min(520px, calc(100vw - 42px));
+      padding: 28px;
+      border: 1px solid rgba(255,70,85,.6);
+      background: rgba(10, 14, 20, .88);
+      box-shadow: 0 0 70px rgba(255,70,85,.22), inset 0 0 0 1px rgba(255,255,255,.05);
+      clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px));
+    }
+
+    .boot-title {
+      color: var(--red);
+      font-size: 30px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      animation: titleGlitch 1.1s steps(2, end) infinite;
+    }
+
+    .boot-sub { margin-top: 10px; color: var(--muted); letter-spacing: .18em; font-size: 12px; }
+    .boot-line { height: 8px; margin-top: 22px; background: #121922; overflow: hidden; border: 1px solid #2e3d4e; }
+    .boot-line::before { content: ""; display: block; height: 100%; width: 42%; background: linear-gradient(90deg, var(--red), var(--cyan)); animation: bootCharge 1.25s cubic-bezier(.2,.8,.2,1) infinite; }
+
+    header, .card { opacity: 0; transform: translateY(26px) scale(.985); animation: panelDeploy .75s cubic-bezier(.2,.8,.2,1) forwards; }
+    header { animation-delay: .18s; }
+    aside.card { animation-delay: .36s; }
+    .arena-card { animation-delay: .48s; }
+
+    label, input, select, button, .stat, .result, .notice, .arena-top, #arena, .progress, .step {
+      opacity: 0;
+      animation: controlBoot .58s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+
+    label:nth-of-type(1) { animation-delay: .55s; }
+    input:nth-of-type(1) { animation-delay: .6s; }
+    label:nth-of-type(2) { animation-delay: .65s; }
+    input:nth-of-type(2) { animation-delay: .7s; }
+    label:nth-of-type(3), select:nth-of-type(1) { animation-delay: .75s; }
+    label:nth-of-type(4), select:nth-of-type(2) { animation-delay: .82s; }
+    label:nth-of-type(5), select:nth-of-type(3) { animation-delay: .89s; }
+    button:nth-of-type(1) { animation-delay: .98s; }
+    button:nth-of-type(2) { animation-delay: 1.05s; }
+    .stat:nth-child(1) { animation-delay: 1.12s; }
+    .stat:nth-child(2) { animation-delay: 1.18s; }
+    .stat:nth-child(3) { animation-delay: 1.24s; }
+    .stat:nth-child(4) { animation-delay: 1.3s; }
+    .result { animation-delay: 1.38s; }
+    .notice { animation-delay: 1.46s; }
+    .arena-top { animation-delay: .72s; }
+    #arena { animation-delay: .84s; }
+    .progress { animation-delay: .96s; }
+    .step:nth-child(1) { animation-delay: 1.08s; }
+    .step:nth-child(2) { animation-delay: 1.16s; }
+    .step:nth-child(3) { animation-delay: 1.24s; }
+
+    header::after, .card::after, button::after, .stat::after, .result::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,.0) 38%, rgba(255,70,85,.26) 48%, rgba(32,231,210,.22) 52%, transparent 64%);
+      transform: translateX(-130%);
+      animation: sweepLine 1.15s ease forwards;
+    }
+
+    .card, .stat, .result, button { position: relative; overflow: hidden; }
+    header::after { animation-delay: .42s; }
+    aside.card::after { animation-delay: .62s; }
+    .arena-card::after { animation-delay: .72s; }
+    button::after { animation-delay: 1.2s; }
+    .stat::after { animation-delay: 1.42s; }
+    .result::after { animation-delay: 1.58s; }
+
+    input, select { animation-name: controlBoot, borderPulse; animation-duration: .58s, 2.8s; animation-delay: var(--delay, .7s), 1.25s; animation-fill-mode: forwards, none; animation-iteration-count: 1, infinite; }
+    button { animation-name: controlBoot, buttonBreath; animation-duration: .58s, 2.4s; animation-delay: var(--delay, .95s), 1.4s; animation-fill-mode: forwards, none; animation-iteration-count: 1, infinite; }
+    .timer { animation: timerGlow 1.35s ease-in-out infinite; }
+    #crosshair { animation: crosshairBoot .85s cubic-bezier(.2,.8,.2,1) .95s both, crosshairPulse 1.6s ease-in-out 1.8s infinite; }
+    .target:not([hidden]) { animation: targetSpawn .22s cubic-bezier(.2,.8,.2,1), targetThreat 1.1s ease-in-out infinite; }
+    .step.active { animation: activeStep .85s ease-in-out infinite; }
+    .sens { animation: sensPulse 1.8s ease-in-out infinite; }
+
+    @keyframes panelDeploy { to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes controlBoot { from { opacity: 0; transform: translateX(-18px); filter: blur(5px); } to { opacity: 1; transform: translateX(0); filter: blur(0); } }
+    @keyframes sweepLine { to { transform: translateX(130%); } }
+    @keyframes bootCharge { from { transform: translateX(-120%); } to { transform: translateX(250%); } }
+    @keyframes titleGlitch { 0%, 100% { transform: translateX(0); text-shadow: 3px 0 rgba(32,231,210,.45); } 45% { transform: translateX(2px); text-shadow: -3px 0 rgba(255,255,255,.35); } 48% { transform: translateX(-2px); } }
+    @keyframes borderPulse { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 0 2px rgba(255,70,85,.1), inset 0 0 16px rgba(32,231,210,.06); } }
+    @keyframes buttonBreath { 0%, 100% { box-shadow: 0 0 0 rgba(255,70,85,0); } 50% { box-shadow: 0 0 24px rgba(255,70,85,.34); } }
+    @keyframes timerGlow { 0%, 100% { text-shadow: 0 0 0 rgba(255,200,87,0); } 50% { text-shadow: 0 0 18px rgba(255,200,87,.65); } }
+    @keyframes crosshairBoot { from { opacity: 0; transform: translate(-50%, -50%) scale(1.8) rotate(45deg); } to { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); } }
+    @keyframes crosshairPulse { 0%, 100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); } 50% { filter: drop-shadow(0 0 10px rgba(255,255,255,.55)); } }
+    @keyframes targetSpawn { from { opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(12deg); } to { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); } }
+    @keyframes targetThreat { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+    @keyframes activeStep { 0%, 100% { box-shadow: inset 0 0 0 rgba(32,231,210,0); } 50% { box-shadow: inset 0 0 22px rgba(32,231,210,.18), 0 0 18px rgba(32,231,210,.15); } }
+    @keyframes sensPulse { 0%, 100% { text-shadow: 0 0 0 rgba(125,242,122,0); } 50% { text-shadow: 0 0 22px rgba(125,242,122,.5); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+      #bootLoader { display: none; }
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      #arena { height: 520px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div class="tag">VALORANT SENSITIVITY LAB · HTML WEB</div>
+      <h1>无畏契约<span>专属灵敏度</span>生成器</h1>
+      <p class="intro">填写你的 DPI 和习惯，完成内嵌 Aimlabs 风格测试。准星碰到目标就触发命中，不需要点击。最终输出的是《无畏契约》游戏设置里可直接输入并应用的灵敏度数值。</p>
+    </header>
+
+    <section class="grid">
+      <aside class="card">
+        <div class="section-title"><h2>个人习惯</h2><span class="mini">当前版本可用数值</span></div>
+        <div class="row">
+          <div>
+            <label for="dpi">鼠标 DPI</label>
+            <input id="dpi" type="number" min="100" max="6400" step="50" value="800">
+          </div>
+          <div>
+            <label for="currentSens">当前游戏灵敏度</label>
+            <input id="currentSens" type="number" min="0.05" max="2" step="0.001" value="0.350">
+          </div>
+        </div>
+        <label for="pad">鼠标垫空间</label>
+        <select id="pad">
+          <option value="large">大鼠标垫 / 手臂流</option>
+          <option value="medium" selected>中等空间 / 混合流</option>
+          <option value="small">小空间 / 手腕流</option>
+        </select>
+        <label for="style">瞄准偏好</label>
+        <select id="style">
+          <option value="low">更稳，远点架枪</option>
+          <option value="balanced" selected>平衡，步枪通用</option>
+          <option value="high">更快，近点转身</option>
+        </select>
+        <label for="role">常用定位</label>
+        <select id="role">
+          <option value="duelist">决斗 / 高频拉枪</option>
+          <option value="initiator" selected>先锋/控场 / 通用</option>
+          <option value="sentinel">哨位 / 稳定架点</option>
+          <option value="operator">狙击 / 低敏微调</option>
+        </select>
+        <div class="btns">
+          <button id="startBtn">开始测试</button>
+          <button id="resetBtn" class="secondary">重置</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><b id="hits">0</b><span>触碰命中</span></div>
+          <div class="stat"><b id="avgTime">0ms</b><span>平均反应</span></div>
+          <div class="stat"><b id="trackRate">0%</b><span>追踪贴近率</span></div>
+          <div class="stat"><b id="microRate">0%</b><span>微调命中率</span></div>
+        </div>
+
+        <div class="result" id="resultBox">
+          <div class="mini">推荐无畏契约灵敏度</div>
+          <div class="sens" id="sensOut">--</div>
+          <div class="mini" id="edpiOut">完成测试后生成可用的游戏内灵敏度</div>
+          <ul class="reason" id="reasons"><li>建议完整完成三项测试，结果会更贴合你的个人习惯。</li></ul>
+        </div>
+        <p class="notice">应用方式：打开无畏契约 → 设置 → 一般 → 鼠标 → 灵敏度：瞄准，输入生成的三位小数即可。按 <span class="kbd">Esc</span> 可退出鼠标锁定。</p>
+      </aside>
+
+      <section class="card arena-card">
+        <div class="arena-top">
+          <div><div class="phase" id="phaseName">待开始</div><div class="mini" id="phaseHint">点击开始测试，然后在靶场内移动鼠标。</div></div>
+          <div class="timer" id="timer">00.0</div>
+        </div>
+        <div id="arena" aria-label="瞄准测试区域">
+          <div id="target" class="target" hidden></div>
+          <div id="crosshair"><div class="dot"></div></div>
+        </div>
+        <div class="progress"><div id="bar"></div></div>
+        <div class="steps">
+          <div class="step" id="step-flick">1 Aimlabs 触碰</div>
+          <div class="step" id="step-track">2 追踪稳定</div>
+          <div class="step" id="step-micro">3 微调控制</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const arena = document.getElementById('arena');
+    const crosshair = document.getElementById('crosshair');
+    const target = document.getElementById('target');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const timerEl = document.getElementById('timer');
+    const phaseName = document.getElementById('phaseName');
+    const phaseHint = document.getElementById('phaseHint');
+    const bar = document.getElementById('bar');
+    const hitsEl = document.getElementById('hits');
+    const avgTimeEl = document.getElementById('avgTime');
+    const trackRateEl = document.getElementById('trackRate');
+    const microRateEl = document.getElementById('microRate');
+    const sensOut = document.getElementById('sensOut');
+    const edpiOut = document.getElementById('edpiOut');
+    const reasonsEl = document.getElementById('reasons');
+    const stepEls = {
+      flick: document.getElementById('step-flick'),
+      track: document.getElementById('step-track'),
+      micro: document.getElementById('step-micro')
+    };
+
+    const state = {
+      running: false,
+      phase: 'idle',
+      phaseStart: 0,
+      targetStart: 0,
+      duration: 0,
+      cross: { x: 0, y: 0 },
+      target: { x: 0, y: 0, vx: 160, vy: 120 },
+      flickHits: 0,
+      flickTimes: [],
+      microHits: 0,
+      microTotal: 0,
+      trackGood: 0,
+      trackTotal: 0,
+      raf: null
+    };
+
+    const phases = [
+      { key: 'flick', name: 'Aimlabs 触碰测试', duration: 15, hint: '移动准星碰到红色目标即命中，不需要点击。' },
+      { key: 'track', name: '追踪稳定性测试', duration: 12, hint: '尽量让准星贴住青色移动目标。' },
+      { key: 'micro', name: '微调控制测试', duration: 12, hint: '黄色小目标用于判断微调能力，碰到即命中。' }
+    ];
+    let phaseIndex = 0;
+
+    function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+    function rect() { return arena.getBoundingClientRect(); }
+    function randomBetween(min, max) { return min + Math.random() * (max - min); }
+
+    function placeTarget(size) {
+      const r = rect();
+      state.target.x = randomBetween(size, r.width - size);
+      state.target.y = randomBetween(size, r.height - size);
+      target.style.left = state.target.x + 'px';
+      target.style.top = state.target.y + 'px';
+      state.targetStart = performance.now();
+    }
+
+    function setCrosshair(x, y) {
+      const r = rect();
+      state.cross.x = clamp(x, 0, r.width);
+      state.cross.y = clamp(y, 0, r.height);
+      crosshair.style.left = state.cross.x + 'px';
+      crosshair.style.top = state.cross.y + 'px';
+    }
+
+    function distanceToTarget() {
+      const dx = state.cross.x - state.target.x;
+      const dy = state.cross.y - state.target.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function hitRadius() {
+      if (state.phase === 'micro') return 18;
+      if (state.phase === 'track') return 32;
+      return 28;
+    }
+
+    function flashHit(text) {
+      const pop = document.createElement('div');
+      pop.className = 'hit-pop';
+      pop.textContent = text;
+      pop.style.left = state.target.x + 'px';
+      pop.style.top = state.target.y + 'px';
+      arena.appendChild(pop);
+      setTimeout(() => pop.remove(), 460);
+    }
+
+    function updateStats() {
+      const avg = state.flickTimes.length ? Math.round(state.flickTimes.reduce((a, b) => a + b, 0) / state.flickTimes.length) : 0;
+      const track = state.trackTotal ? Math.round((state.trackGood / state.trackTotal) * 100) : 0;
+      const micro = state.microTotal ? Math.round((state.microHits / state.microTotal) * 100) : 0;
+      hitsEl.textContent = state.flickHits;
+      avgTimeEl.textContent = avg + 'ms';
+      trackRateEl.textContent = track + '%';
+      microRateEl.textContent = micro + '%';
+    }
+
+    function updateSteps() {
+      Object.values(stepEls).forEach(el => { el.classList.remove('active', 'done'); });
+      phases.forEach((p, i) => {
+        if (i < phaseIndex) stepEls[p.key].classList.add('done');
+        if (i === phaseIndex && state.running) stepEls[p.key].classList.add('active');
+      });
+    }
+
+    async function start() {
+      reset(false);
+      startBtn.disabled = true;
+      state.running = true;
+      const r = rect();
+      setCrosshair(r.width / 2, r.height / 2);
+      try { await arena.requestPointerLock(); } catch (e) {}
+      phaseIndex = 0;
+      startPhase();
+    }
+
+    function startPhase() {
+      const p = phases[phaseIndex];
+      state.phase = p.key;
+      state.duration = p.duration;
+      state.phaseStart = performance.now();
+      phaseName.textContent = p.name;
+      phaseHint.textContent = p.hint;
+      target.hidden = false;
+      target.className = 'target' + (p.key === 'track' ? ' track' : p.key === 'micro' ? ' small' : '');
+      if (p.key === 'micro') state.microTotal = 0;
+      if (p.key === 'track') {
+        placeTarget(80);
+        state.target.vx = 180;
+        state.target.vy = 130;
+      } else {
+        placeTarget(p.key === 'micro' ? 34 : 52);
+        if (p.key === 'micro') state.microTotal++;
+      }
+      updateSteps();
+      loop(performance.now());
+    }
+
+    function nextPhase() {
+      cancelAnimationFrame(state.raf);
+      phaseIndex++;
+      if (phaseIndex >= phases.length) {
+        finish();
+      } else {
+        startPhase();
+      }
+    }
+
+    function loop(now) {
+      if (!state.running) return;
+      const elapsed = (now - state.phaseStart) / 1000;
+      const left = Math.max(0, state.duration - elapsed);
+      timerEl.textContent = left.toFixed(1).padStart(4, '0');
+      bar.style.width = ((elapsed / state.duration) * 100).toFixed(1) + '%';
+
+      if (state.phase === 'track') updateTrack(now);
+      if (state.phase === 'flick' || state.phase === 'micro') checkTouchHit();
+      updateStats();
+
+      if (left <= 0) nextPhase();
+      else state.raf = requestAnimationFrame(loop);
+    }
+
+    function checkTouchHit() {
+      if (distanceToTarget() <= hitRadius()) {
+        if (state.phase === 'flick') {
+          state.flickHits++;
+          state.flickTimes.push(performance.now() - state.targetStart);
+          flashHit('+1');
+          placeTarget(52);
+        } else if (state.phase === 'micro') {
+          state.microHits++;
+          flashHit('微调');
+          placeTarget(34);
+          state.microTotal++;
+        }
+      }
+    }
+
+    function updateTrack(now) {
+      const r = rect();
+      const dt = 1 / 60;
+      state.target.x += state.target.vx * dt;
+      state.target.y += state.target.vy * dt;
+      if (state.target.x < 45 || state.target.x > r.width - 45) state.target.vx *= -1;
+      if (state.target.y < 45 || state.target.y > r.height - 45) state.target.vy *= -1;
+      target.style.left = state.target.x + 'px';
+      target.style.top = state.target.y + 'px';
+      state.trackTotal++;
+      if (distanceToTarget() <= hitRadius()) state.trackGood++;
+    }
+
+    function finish() {
+      state.running = false;
+      state.phase = 'done';
+      target.hidden = true;
+      timerEl.textContent = '完成';
+      phaseName.textContent = '已生成结果';
+      phaseHint.textContent = '推荐值已限制在无畏契约可输入的常用范围内。';
+      bar.style.width = '100%';
+      Object.values(stepEls).forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
+      startBtn.disabled = false;
+      if (document.pointerLockElement) document.exitPointerLock();
+      calculateSensitivity();
+      updateStats();
+    }
+
+    function calculateSensitivity() {
+      const dpi = clamp(Number(document.getElementById('dpi').value) || 800, 100, 6400);
+      const currentSens = clamp(Number(document.getElementById('currentSens').value) || 0.35, 0.05, 2);
+      const pad = document.getElementById('pad').value;
+      const style = document.getElementById('style').value;
+      const role = document.getElementById('role').value;
+      const currentReference = dpi * currentSens;
+
+      let base = style === 'low' ? 220 : style === 'high' ? 360 : 280;
+      if (pad === 'small') base += 45;
+      if (pad === 'large') base -= 35;
+      if (role === 'operator' || role === 'sentinel') base -= 25;
+      if (role === 'duelist') base += 20;
+
+      const avg = state.flickTimes.length ? state.flickTimes.reduce((a, b) => a + b, 0) / state.flickTimes.length : 900;
+      const flickScore = clamp(state.flickHits / 18, 0, 1);
+      const trackRate = state.trackTotal ? state.trackGood / state.trackTotal : 0;
+      const microRate = state.microTotal ? state.microHits / state.microTotal : 0;
+
+      let adjust = 0;
+      if (avg > 850 && trackRate > .42) adjust += 28;
+      if (avg < 520 && microRate < .58) adjust -= 32;
+      if (trackRate < .28) adjust -= 18;
+      if (microRate > .78 && flickScore < .55) adjust += 18;
+      if (currentReference > 0) adjust += clamp((currentReference - base) * .12, -35, 35);
+
+      const targetReference = clamp(Math.round(base + adjust), 160, 460);
+      const valorantSens = clamp(targetReference / dpi, 0.05, 2);
+      const roundedSens = valorantSens.toFixed(3);
+
+      sensOut.textContent = roundedSens;
+      edpiOut.textContent = '你的 DPI：' + dpi + '｜当前灵敏度：' + currentSens.toFixed(3) + '｜生成值可直接输入游戏';
+
+      const reasons = [];
+      reasons.push('只需要保持你的鼠标 DPI 不变，然后把上方三位小数输入《无畏契约》灵敏度：瞄准。');
+      if (avg > 850) reasons.push('触碰目标平均反应偏慢，算法适度提高灵敏度，减少大幅拉枪距离。');
+      if (avg < 520 && microRate < .58) reasons.push('拉枪速度较快但微调命中不足，算法降低灵敏度来增强控枪。');
+      if (trackRate < .28) reasons.push('追踪贴近率偏低，推荐值避免过高，优先保证稳定性。');
+      if (pad === 'small') reasons.push('你选择小鼠标垫/手腕流，游戏内灵敏度会略高，方便转身。');
+      if (pad === 'large') reasons.push('你选择大鼠标垫/手臂流，游戏内灵敏度会略低，方便架枪和微调。');
+      reasonsEl.innerHTML = reasons.map(item => '<li>' + item + '</li>').join('');
+
+      localStorage.setItem('valorantSensLab', JSON.stringify({ dpi, currentSens, pad, style, role, roundedSens }));
+    }
+
+    function reset(clearResult = true) {
+      cancelAnimationFrame(state.raf);
+      Object.assign(state, {
+        running: false,
+        phase: 'idle', phaseStart: 0, targetStart: 0, duration: 0,
+        target: { x: 0, y: 0, vx: 160, vy: 120 },
+        flickHits: 0, flickTimes: [], microHits: 0, microTotal: 0, trackGood: 0, trackTotal: 0
+      });
+      phaseIndex = 0;
+      const r = rect();
+      setCrosshair(r.width / 2, r.height / 2);
+      target.hidden = true;
+      phaseName.textContent = '待开始';
+      phaseHint.textContent = '点击开始测试，然后在靶场内移动鼠标。';
+      timerEl.textContent = '00.0';
+      bar.style.width = '0%';
+      startBtn.disabled = false;
+      Object.values(stepEls).forEach(el => el.classList.remove('active', 'done'));
+      if (clearResult) {
+        sensOut.textContent = '--';
+        edpiOut.textContent = '完成测试后生成可用的游戏内灵敏度';
+        reasonsEl.innerHTML = '<li>建议完整完成三项测试，结果会更贴合你的个人习惯。</li>';
+      }
+      updateStats();
+    }
+
+    document.addEventListener('pointerlockchange', () => {
+      if (document.pointerLockElement !== arena && state.running) {
+        phaseHint.textContent = '鼠标锁定已退出。再次点击开始可重新测试。';
+      }
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      if (document.pointerLockElement === arena && state.running) {
+        setCrosshair(state.cross.x + event.movementX, state.cross.y + event.movementY);
+      }
+    });
+
+    arena.addEventListener('mousemove', (event) => {
+      if (document.pointerLockElement !== arena && !state.running) {
+        const r = rect();
+        setCrosshair(event.clientX - r.left, event.clientY - r.top);
+      }
+    });
+
+    startBtn.addEventListener('click', start);
+    resetBtn.addEventListener('click', () => reset(true));
+    window.addEventListener('resize', () => reset(false));
+
+    const saved = localStorage.getItem('valorantSensLab');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        document.getElementById('dpi').value = data.dpi || 800;
+        document.getElementById('currentSens').value = data.currentSens || 0.35;
+        document.getElementById('pad').value = data.pad || 'medium';
+        document.getElementById('style').value = data.style || 'balanced';
+        document.getElementById('role').value = data.role || 'initiator';
+        if (data.roundedSens) {
+          sensOut.textContent = data.roundedSens;
+          edpiOut.textContent = '你的 DPI：' + (data.dpi || 800) + '｜上次生成值可直接输入游戏';
+        }
+      } catch (e) {}
+    }
+    reset(false);
+  </script>
+</body>
+</html>
